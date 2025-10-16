@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -207,7 +208,7 @@ let spinAngleStart = 0;
 let spinTime = 0;
 let spinTimeTotal = 0;
 let spinning = false;
-let lastAngle = 0;
+let lastSector = -1;
 
 function drawWheel() {
   const outsideRadius = 150;
@@ -216,8 +217,7 @@ function drawWheel() {
 
   ctx.clearRect(0, 0, 360, 360);
   arc = Math.PI / (items.length / 2);
-
-  const colors = ["#00c16b", "#27a2ff", "#FFD700"]; // hijau, biru, kuning
+  const colors = ["#00c16b", "#27a2ff", "#FFD700"];
 
   for (let i = 0; i < items.length; i++) {
     const angle = startAngle + i * arc;
@@ -228,7 +228,7 @@ function drawWheel() {
     ctx.fill();
 
     ctx.save();
-    ctx.fillStyle = "#000"; // teks hitam
+    ctx.fillStyle = "#000";
     ctx.translate(180 + Math.cos(angle + arc / 2) * textRadius,
                   180 + Math.sin(angle + arc / 2) * textRadius);
     ctx.rotate(angle + arc / 2 + Math.PI / 2);
@@ -238,7 +238,6 @@ function drawWheel() {
     ctx.restore();
   }
 
-  // 🔴 Lingkaran tengah warna merah
   ctx.beginPath();
   ctx.arc(180, 180, insideRadius, 0, 2 * Math.PI);
   ctx.fillStyle = "#ff3b3b";
@@ -246,7 +245,7 @@ function drawWheel() {
 }
 
 function rotateWheel() {
-  spinTime += 20;
+  spinTime += 16; // frame ~60fps
   if (spinTime >= spinTimeTotal) {
     stopRotateWheel();
     return;
@@ -256,10 +255,13 @@ function rotateWheel() {
   startAngle += (spinAngle * Math.PI / 180);
   drawWheel();
 
-  if (Math.abs(startAngle - lastAngle) > 0.12) {
+  // 🎵 Suara sinkron dengan sektor
+  const degrees = (startAngle * 180 / Math.PI + 270) % 360;
+  const currentSector = Math.floor(degrees / (360 / items.length));
+  if (currentSector !== lastSector) {
     tickSound.currentTime = 0;
     tickSound.play();
-    lastAngle = startAngle;
+    lastSector = currentSector;
   }
 
   requestAnimationFrame(rotateWheel);
@@ -269,9 +271,9 @@ function stopRotateWheel() {
   const degrees = startAngle * 180 / Math.PI + 270;
   const arcd = arc * 180 / Math.PI;
   const index = Math.floor((360 - (degrees % 360)) / arcd) % items.length;
+
   popupResult.innerHTML = items[index];
   popup.classList.add("show");
-
   setTimeout(() => popup.classList.remove("show"), 4000);
   spinning = false;
 }
@@ -287,9 +289,10 @@ spinBtn.addEventListener("click", () => {
   const val = itemsInput.value.trim();
   if (val) items = val.split(",").map(i => i.trim());
   spinning = true;
-  spinAngleStart = Math.random() * 15 + 45;
+  lastSector = -1;
+  spinAngleStart = Math.random() * 25 + 50; // putaran lebih cepat
   spinTime = 0;
-  spinTimeTotal = Math.random() * 4000 + 4000;
+  spinTimeTotal = Math.random() * 4000 + 5000; // durasi lebih lama
   rotateWheel();
 });
 
